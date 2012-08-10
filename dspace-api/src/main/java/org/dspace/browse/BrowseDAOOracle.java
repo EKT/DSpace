@@ -117,6 +117,9 @@ public class BrowseDAOOracle implements BrowseDAO
     private boolean itemsInArchive = true;
     private boolean itemsWithdrawn = false;
 
+    private boolean enableBrowseFrequencies = true;
+    private boolean isCountQuery = false;
+    
     public BrowseDAOOracle(Context context)
         throws BrowseException
     {
@@ -131,6 +134,8 @@ public class BrowseDAOOracle implements BrowseDAO
      */
     public int doCountQuery() throws BrowseException
     {
+    	isCountQuery = true;
+    	
         String   query  = getQuery();
         Object[] params = getQueryParams();
 
@@ -337,6 +342,8 @@ public class BrowseDAOOracle implements BrowseDAO
      */
     public List<BrowseItem> doQuery() throws BrowseException
     {
+    	isCountQuery = false;
+    	
         String query = getQuery();
         Object[] params = getQueryParams();
 
@@ -383,6 +390,8 @@ public class BrowseDAOOracle implements BrowseDAO
      */
     public List<String[]> doValueQuery() throws BrowseException
     {
+    	isCountQuery = false;
+    	
         String query = getQuery();
         Object[] params = getQueryParams();
 
@@ -405,7 +414,12 @@ public class BrowseDAOOracle implements BrowseDAO
                 TableRow row = tri.next();
                 String valueResult = row.getStringColumn("value");
                 String authorityResult = row.getStringColumn("authority");
-                results.add(new String[]{valueResult,authorityResult});
+                if (enableBrowseFrequencies){
+                	long frequency = row.getLongColumn("num");
+                	results.add(new String[]{valueResult,authorityResult, String.valueOf(frequency)});
+                }
+                else
+                	results.add(new String[]{valueResult,authorityResult, ""});
             }
 
             return results;
@@ -741,7 +755,9 @@ public class BrowseDAOOracle implements BrowseDAO
     {
         StringBuffer queryBuf = new StringBuffer();
 
-        if (!buildSelectListCount(queryBuf))
+        // if we want frequencies and it is not a count query, add both select and count fields in the sql query
+        if (!buildSelectListCount(queryBuf) || (enableBrowseFrequencies && !isCountQuery))
+        
         {
             if (!buildSelectListValues(queryBuf))
             {
@@ -762,6 +778,9 @@ public class BrowseDAOOracle implements BrowseDAO
         // and include container support
         buildWhereClauseDistinctConstraints(queryBuf, params);
 
+        // Add a group by element
+        buildGroupBy(queryBuf);
+        
         // assemble the order by field
         buildOrderBy(queryBuf);
 
@@ -814,6 +833,33 @@ public class BrowseDAOOracle implements BrowseDAO
         return queryBuf.toString();
     }
 
+    /**
+     * Get the clause to perform search result grouping in case frequencies are enabled.  This will
+     * return something of the form:
+     *
+     * <code>
+     * GROUP BY [field]
+     * </code>
+     *
+     * @return  the ORDER BY clause
+     */
+    private void buildGroupBy(StringBuffer queryBuf)
+    {
+    	// add group by only if we want frequencies and it nota count query
+    	if (selectValues != null && selectValues.length > 0 && enableBrowseFrequencies && !isCountQuery)
+        {
+            queryBuf.append(" GROUP BY ");
+            queryBuf.append(table).append(".").append(selectValues[0]);
+            for (int i = 1; i < selectValues.length; i++)
+            {
+                queryBuf.append(", ");
+                queryBuf.append(table).append(".").append(selectValues[i]);
+            }
+            queryBuf.append(", ");
+            queryBuf.append(table).append(".").append("sort_value");
+        }
+    }
+    
     /**
      * Get the clause to perform search result ordering.  This will
      * return something of the form:
@@ -1034,6 +1080,11 @@ public class BrowseDAOOracle implements BrowseDAO
     {
         if (selectValues != null && selectValues.length > 0)
         {
+        	// if we want frequencies, count select is already added so add the comma
+        	if (countValues != null && countValues.length > 0 && enableBrowseFrequencies){
+        		queryBuf.append(", ");
+        	}
+        	
             queryBuf.append(table).append(".").append(selectValues[0]);
             for (int i = 1; i < selectValues.length; i++)
             {
@@ -1074,20 +1125,17 @@ public class BrowseDAOOracle implements BrowseDAO
         // Then append the table
         queryBuf.append(" FROM ");
         queryBuf.append(table);
-        if (containerTable != null || (value != null && valueField != null && tableDis != null && tableMap != null))
+        if (/*containerTable != null && */tableMap != null)
         {
-            queryBuf.append(", (SELECT ");
-            if (containerTable != null)
-            {
-                queryBuf.append(containerTable).append(".item_id");
-            }
-            else
-            {
-                queryBuf.append("DISTINCT ").append(tableMap).append(".item_id");
-            }
+        	// If we don't want frequencies, distinct element is added for a faster sql query
+        	if (containerTable != null && !enableBrowseFrequencies)
+        		queryBuf.append(", (SELECT DISTINCT ").append(tableMap).append(".distinct_id ");
+        	else //otherwise... remove distinct
+        		queryBuf.append(", (SELECT ").append(tableMap).append(".distinct_id ");
             queryBuf.append(" FROM ");
             buildFocusedSelectTables(queryBuf);
-            queryBuf.append(" WHERE ");
+            if (containerTable != null && tableMap != null)
+            	queryBuf.append(" WHERE ");
             buildFocusedSelectClauses(queryBuf, params);
             queryBuf.append(") mappings");
         }
@@ -1395,4 +1443,12 @@ public class BrowseDAOOracle implements BrowseDAO
     public String getAuthorityValue() {
         return authority;
     }
+    
+    public boolean isEnableBrowseFrequencies() {
+		return enableBrowseFrequencies;
+	}
+
+	public void setEnableBrowseFrequencies(boolean enableBrowseFrequencies) {
+		this.enableBrowseFrequencies = enableBrowseFrequencies;
+	}
 }
