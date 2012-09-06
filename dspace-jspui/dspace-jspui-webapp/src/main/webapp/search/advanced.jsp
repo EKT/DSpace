@@ -46,7 +46,7 @@
 	int dateIndex = -1;
 	String dateIndexConfig = ConfigurationManager.getProperty("search.index.date");
 
-	while ( ((definition = ConfigurationManager.getProperty("search.index.display." + idx))) != null){
+	while ( ((definition = ConfigurationManager.getProperty("jspui.search.index.display." + idx))) != null){
 	        
 		String index = definition;
 		searchIndices.add(index);
