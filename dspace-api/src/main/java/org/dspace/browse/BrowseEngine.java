@@ -425,6 +425,11 @@ public class BrowseEngine
             // set our constraints on community or collection
             if (scope.inCollection() || scope.inCommunity())
             {
+            	// Scoped browsing of distinct metadata requires the mapping
+                // table to be specified.
+            	if (!browseIndex.isDisplayFrequencies())
+            		dao.setFilterMappingTables(null, browseIndex.getMapTableName());
+                
                 if (scope.inCollection())
                 {
                     Collection col = (Collection) scope.getBrowseContainer();

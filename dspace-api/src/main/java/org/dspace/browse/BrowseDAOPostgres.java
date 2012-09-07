@@ -789,7 +789,8 @@ public class BrowseDAOPostgres implements BrowseDAO
         buildOrderBy(queryBuf);
 
         // prepare the limit and offset clauses
-        buildRowLimitAndOffset(queryBuf, params);
+        if (!enableBrowseFrequencies || isCountQuery || containerTable!=null)
+        	buildRowLimitAndOffset(queryBuf, params);
 
         return queryBuf.toString();
     }
@@ -833,7 +834,8 @@ public class BrowseDAOPostgres implements BrowseDAO
         buildOrderBy(queryBuf);
 
         // prepare the limit and offset clauses
-        buildRowLimitAndOffset(queryBuf, params);
+        if (!enableBrowseFrequencies || isCountQuery || containerTable!=null)
+        	buildRowLimitAndOffset(queryBuf, params);
 
         return queryBuf.toString();
     }
@@ -853,15 +855,20 @@ public class BrowseDAOPostgres implements BrowseDAO
     	// add group by only if we want frequencies and it nota count query
     	if (selectValues != null && selectValues.length > 0 && enableBrowseFrequencies && !isCountQuery)
         {
+    		String distable = table;
+        	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+        		distable = "distable";
+        	}
+        	
             queryBuf.append(" GROUP BY ");
-            queryBuf.append(table).append(".").append(selectValues[0]);
+            queryBuf.append(distable).append(".").append(selectValues[0]);
             for (int i = 1; i < selectValues.length; i++)
             {
                 queryBuf.append(", ");
-                queryBuf.append(table).append(".").append(selectValues[i]);
+                queryBuf.append(distable).append(".").append(selectValues[i]);
             }
             queryBuf.append(", ");
-            queryBuf.append(table).append(".").append("sort_value");
+            queryBuf.append(distable).append(".").append("sort_value");
         }
     }
     
@@ -1084,11 +1091,16 @@ public class BrowseDAOPostgres implements BrowseDAO
         		queryBuf.append(", ");
         	}
         		
-            queryBuf.append(table).append(".").append(selectValues[0]);
+        	String distable = table;
+        	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+        		distable = "distable";
+        	}
+        	
+            queryBuf.append(distable).append(".").append(selectValues[0]);
             for (int i = 1; i < selectValues.length; i++)
             {
                 queryBuf.append(", ");
-                queryBuf.append(table).append(".").append(selectValues[i]);
+                queryBuf.append(distable).append(".").append(selectValues[i]);
             }
 
             return true;
@@ -1176,7 +1188,14 @@ public class BrowseDAOPostgres implements BrowseDAO
 
         // Then append the table
         queryBuf.append(" FROM ");
-        queryBuf.append(table);
+        if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+        	queryBuf.append("(SELECT "+table+".* FROM "+table+" ORDER BY "+orderField+" ASC NULLS LAST");//
+        	buildRowLimitAndOffset(queryBuf, queryParams);
+        	queryBuf.append(") distable");
+        }
+        else {
+        	queryBuf.append(table);
+        }
         if (/*containerTable != null && */tableMap != null)
         {
         	// If we don't want frequencies, distinct element is added for a faster sql query
@@ -1213,8 +1232,13 @@ public class BrowseDAOPostgres implements BrowseDAO
         //if (containerIDField != null && containerID != -1 && containerTable != null)
         if (tableMap != null)	
         {
+        	String distable = table;
+        	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+        		distable = "distable";
+        	}
+        	
             buildWhereClauseOpInsert(queryBuf);
-            queryBuf.append(" ").append(table).append(".id=mappings.distinct_id ");
+            queryBuf.append(" ").append(distable).append(".id=mappings.distinct_id ");
         }
     }
 
@@ -1283,8 +1307,13 @@ public class BrowseDAOPostgres implements BrowseDAO
         {
             if (containerIDField != null && containerID != -1)
             {
+            	String distable = table;
+            	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+            		distable = "distable";
+            	}
+            	
                 buildWhereClauseOpInsert(queryBuf);
-                queryBuf.append(" ").append(table).append(".item_id=mappings.item_id ");
+                queryBuf.append(" ").append(distable).append(".item_id=mappings.item_id ");
             }
         }
     }
@@ -1314,7 +1343,12 @@ public class BrowseDAOPostgres implements BrowseDAO
             queryBuf.append(" ");
             if (tableDis != null && tableMap != null)
             {
-                queryBuf.append(table).append(".item_id=mappings.item_id ");
+            	String distable = table;
+            	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+            		distable = "distable";
+            	}
+            	
+                queryBuf.append(distable).append(".item_id=mappings.item_id ");
             }
             else
             {
