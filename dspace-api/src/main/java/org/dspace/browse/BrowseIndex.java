@@ -59,7 +59,7 @@ public final class BrowseIndex
     private String defaultOrder = SortOption.ASCENDING;
     
     /** whether to display frequencies or not, in case of a "metadata" browse index*/
-    private boolean displayFrequencies = false;
+    private boolean displayFrequencies = true;
 
     /** additional 'internal' tables that are always defined */
     private static BrowseIndex itemIndex      = new BrowseIndex("bi_item");
@@ -690,7 +690,8 @@ public final class BrowseIndex
             
             //Load the frequency configuration
             String freqDefinition = ConfigurationManager.getProperty("webui.browse.metadata.show-freq." + idx);
-            bi.displayFrequencies = Boolean.valueOf(freqDefinition);
+            if (freqDefinition!=null)
+            	bi.displayFrequencies = Boolean.valueOf(freqDefinition);
             
             browseIndices.add(bi);
             idx++;

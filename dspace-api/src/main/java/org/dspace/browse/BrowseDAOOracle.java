@@ -785,7 +785,7 @@ public class BrowseDAOOracle implements BrowseDAO
         buildOrderBy(queryBuf);
 
         // prepare the limit and offset clauses
-        if (!enableBrowseFrequencies || isCountQuery || containerTable!=null)
+        if (!enableBrowseFrequencies || isCountQuery)
         	buildRowLimitAndOffset(queryBuf, params);
 
         return queryBuf.toString();
@@ -829,8 +829,7 @@ public class BrowseDAOOracle implements BrowseDAO
         buildOrderBy(queryBuf);
 
         // prepare the limit and offset clauses
-        if (!enableBrowseFrequencies || isCountQuery || containerTable!=null)
-        	buildRowLimitAndOffset(queryBuf, params);
+        buildRowLimitAndOffset(queryBuf, params);
 
         return queryBuf.toString();
     }
@@ -851,7 +850,7 @@ public class BrowseDAOOracle implements BrowseDAO
     	if (selectValues != null && selectValues.length > 0 && enableBrowseFrequencies && !isCountQuery)
         {
     		String distable = table;
-        	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+    		if (enableBrowseFrequencies && !isCountQuery){
         		distable = "distable";
         	}
         	
@@ -1011,14 +1010,16 @@ public class BrowseDAOOracle implements BrowseDAO
     {
         if (containerTable != null)
         {
-            queryBuf.append(containerTable);
+        	if (!enableBrowseFrequencies || isCountQuery || !isDistinct())
+        		queryBuf.append(containerTable);
         }
 
         if (tableMap != null)
         {
             if (containerTable != null)
             {
-                queryBuf.append(", ");
+            	if (!enableBrowseFrequencies || isCountQuery || !isDistinct())
+            		queryBuf.append(", ");
             }
 
             queryBuf.append(tableMap);
@@ -1093,7 +1094,7 @@ public class BrowseDAOOracle implements BrowseDAO
         	}
         	
         	String distable = table;
-        	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+        	if (enableBrowseFrequencies && !isCountQuery && isDistinct()){
         		distable = "distable";
         	}
         	
@@ -1189,6 +1190,14 @@ public class BrowseDAOOracle implements BrowseDAO
         	buildRowLimitAndOffset(queryBuf, queryParams);
         	queryBuf.append(") distable");
         }
+        else if (enableBrowseFrequencies && !isCountQuery && containerTable!=null){
+        	queryBuf.append("(SELECT "+table+".* FROM "+table+", (SELECT DISTINCT "+tableMap+
+        			".distinct_id FROM "+containerTable+", "+tableMap+" WHERE "+tableMap+".item_id="+containerTable+
+        			".item_id AND "+containerTable+".collection_id="+containerID+" ) mappings WHERE "+table+
+        			".id=mappings.distinct_id  ORDER BY "+orderField+" ASC NULLS LAST");
+        	buildRowLimitAndOffset(queryBuf, queryParams);
+        	queryBuf.append(") distable");
+        }
         else {
         	queryBuf.append(table);
         }
@@ -1197,8 +1206,11 @@ public class BrowseDAOOracle implements BrowseDAO
             queryBuf.append(", (SELECT DISTINCT ").append(tableMap).append(".distinct_id ");
             queryBuf.append(" FROM ");
             buildFocusedSelectTables(queryBuf);
-            queryBuf.append(" WHERE ");
-            buildFocusedSelectClauses(queryBuf, params);
+            if (!enableBrowseFrequencies || isCountQuery){
+            	if (containerTable != null && tableMap != null)
+            		queryBuf.append(" WHERE ");
+            	buildFocusedSelectClauses(queryBuf, params);
+            }
             queryBuf.append(") mappings");
         }
         queryBuf.append(" ");
@@ -1226,7 +1238,7 @@ public class BrowseDAOOracle implements BrowseDAO
         if (containerIDField != null && containerID != -1 && containerTable != null)
         {
         	String distable = table;
-        	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+        	if (enableBrowseFrequencies && !isCountQuery){
         		distable = "distable";
         	}
         	
@@ -1259,7 +1271,7 @@ public class BrowseDAOOracle implements BrowseDAO
             if (containerIDField != null && containerID != -1)
             {
             	String distable = table;
-            	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+            	if (enableBrowseFrequencies && !isCountQuery && containerTable==null && isDistinct()){
             		distable = "distable";
             	}
             	
@@ -1336,7 +1348,7 @@ public class BrowseDAOOracle implements BrowseDAO
             if (tableDis != null && tableMap != null)
             {
             	String distable = table;
-            	if (enableBrowseFrequencies && !isCountQuery && containerTable==null){
+            	if (enableBrowseFrequencies && !isCountQuery && containerTable==null && isDistinct()){
             		distable = "distable";
             	}
             	
