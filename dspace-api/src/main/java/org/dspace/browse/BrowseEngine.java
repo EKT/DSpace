@@ -449,12 +449,6 @@ public class BrowseEngine
             // this is the total number of results in answer to the query
             int total = getTotalResults(true);
 
-            // if we want to display frequencies, pass to dao both count and select values
-            if (browseIndex.isDisplayFrequencies()){
-            	dao.setSelectValues(new String[]{"value", "authority"});
-            	dao.setCountValues(new String[]{"*"});
-            }
-            
             // set the ordering field (there is only one option)
             dao.setOrderField("sort_value");
 
