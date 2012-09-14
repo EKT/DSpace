@@ -789,7 +789,7 @@ public class BrowseDAOPostgres implements BrowseDAO
             
             queryBuf.insert(0, before);
             queryBuf.append(after);
-            buildOrderBy(queryBuf);    
+            buildOrderBy(queryBuf);
         }
         
         return queryBuf.toString();
