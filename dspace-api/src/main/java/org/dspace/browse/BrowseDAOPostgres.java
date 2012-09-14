@@ -783,12 +783,13 @@ public class BrowseDAOPostgres implements BrowseDAO
 
         //If we want frequencies and this is not a count query, enchance the query accordingly
         if (isEnableBrowseFrequencies() && countValues==null){
-            String before = "SELECT count(*) AS num, values.value, values.authority FROM (";
+            String before = "SELECT count(*) AS num, values.value, values.authority, values."+orderField+" FROM (";
             String after = ") values , "+tableMap+" WHERE values.id = "+tableMap+".distinct_id GROUP BY "+tableMap+
-                    ".distinct_id, values.value, values.authority;";
+                    ".distinct_id, values.value, values.authority, values.sort_value";
             
             queryBuf.insert(0, before);
             queryBuf.append(after);
+            buildOrderBy(queryBuf);   
         }
         
         return queryBuf.toString();
