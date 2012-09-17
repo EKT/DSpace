@@ -67,6 +67,7 @@ import org.dspace.sort.SortOption;
 import org.dspace.sort.OrderFormat;
 
 import org.dspace.app.util.DCInputsReaderException;
+
 import org.dspace.app.util.Util;
 
 /**
@@ -103,7 +104,7 @@ public class DSIndexer
 
     private static int batchFlushAfterDocuments = ConfigurationManager.getIntProperty("search.batch.documents", 20);
     private static boolean batchProcessingMode = false;
-    
+
     // Class to hold the index configuration (one instance per config line)
     private static class IndexConfig
     {
@@ -126,11 +127,11 @@ public class DSIndexer
             this.type = type;
         }
     }
-    
+
     private static String indexDirectory = ConfigurationManager.getProperty("search.dir");
-    
+
     private static int maxfieldlength = -1;
-    	
+
     // TODO: Support for analyzers per language, or multiple indices
     /** The analyzer for this DSpace instance */
     private static volatile Analyzer analyzer = null;
@@ -138,7 +139,7 @@ public class DSIndexer
     /** Static initialisation of index configuration */
     /** Includes backwards compatible default configuration */
     private static IndexConfig[] indexConfigArr = new IndexConfig[]
-    {
+            {
         new IndexConfig("author",     "dc", "contributor", Item.ANY,          "text") ,
         new IndexConfig("author",     "dc", "creator",     Item.ANY,          "text"),
         new IndexConfig("author",     "dc", "description", "statementofresponsibility", "text"),
@@ -150,16 +151,16 @@ public class DSIndexer
         new IndexConfig("mimetype",   "dc", "format",      "mimetype",        "text"),
         new IndexConfig("sponsor",    "dc", "description", "sponsorship",     "text"),
         new IndexConfig("identifier", "dc", "identifier",  Item.ANY,          "text")
-    };
+            };
 
     static {
-    	
-    	// calculate maxfieldlength
-    	if (ConfigurationManager.getProperty("search.maxfieldlength") != null)
+
+        // calculate maxfieldlength
+        if (ConfigurationManager.getProperty("search.maxfieldlength") != null)
         {
             maxfieldlength = ConfigurationManager.getIntProperty("search.maxfieldlength");
         }
-    	
+
         // read in indexes from the config
         ArrayList<String> indexConfigList = new ArrayList<String>();
 
@@ -168,24 +169,24 @@ public class DSIndexer
         {
             indexConfigList.add(ConfigurationManager.getProperty("search.index." + i));
         }
-    
+
         if (indexConfigList.size() > 0)
         {
             indexConfigArr = new IndexConfig[indexConfigList.size()];
-            
+
             for (int i = 0; i < indexConfigList.size(); i++)
             {
                 indexConfigArr[i] = new IndexConfig();
                 String index = indexConfigList.get(i);
-    
+
                 String[] configLine = index.split(":");
-                
+
                 indexConfigArr[i].indexName = configLine[0];
-    
+
                 // Get the schema, element and qualifier for the index
                 // TODO: Should check valid schema, element, qualifier?
                 String[] parts = configLine[1].split("\\.");
-    
+
                 switch (parts.length)
                 {
                 case 3:
@@ -207,7 +208,7 @@ public class DSIndexer
                 }
             }
         }
-        
+
         /*
          * Increase the default write lock so that Indexing can be interrupted.
          */
@@ -256,7 +257,7 @@ public class DSIndexer
      */
     public static void indexContent(Context context, DSpaceObject dso) throws SQLException, DCInputsReaderException
     {
-    	indexContent(context, dso, false);
+        indexContent(context, dso, false);
     }
     /**
      * If the handle for the "dso" already exists in the index, and
@@ -299,7 +300,7 @@ public class DSIndexer
     {
         try
         {
-        	unIndexContent(context, dso.getHandle());
+            unIndexContent(context, dso.getHandle());
         }
         catch(Exception exception)
         {
@@ -335,7 +336,7 @@ public class DSIndexer
             // handle!");
         }
     }
-    
+
     /**
      * reIndexContent removes something from the index, then re-indexes it
      *
@@ -344,33 +345,33 @@ public class DSIndexer
      */
     public static void reIndexContent(Context context, DSpaceObject dso)
             throws SQLException, IOException
-    {
+            {
         try
         {
-        	indexContent(context, dso);
+            indexContent(context, dso);
         }
         catch(Exception exception)
         {
             log.error(exception.getMessage(),exception);
             emailException(exception);
         }
-    }
-    
+            }
+
     /**
-	 * create full index - wiping old index
-	 * 
-	 * @param c context to use
-	 */
+     * create full index - wiping old index
+     * 
+     * @param c context to use
+     */
     public static void createIndex(Context c) throws SQLException, IOException
     {
 
-    	/* Create a new index, blowing away the old. */
+        /* Create a new index, blowing away the old. */
         openIndex(true).close();
-        
+
         /* Reindex all content preemptively. */
         DSIndexer.updateIndex(c, true);
     }
-    
+
     /**
      * Optimize the existing index. Important to do regularly to reduce 
      * filehandle usage and keep performance fast!
@@ -418,29 +419,29 @@ public class DSIndexer
             CommandLine line = null;
 
             options.addOption(OptionBuilder
-                            .withArgName("item handle")
-                            .hasArg(true)
-                            .withDescription(
-                                    "remove an Item, Collection or Community from index based on its handle")
+                    .withArgName("item handle")
+                    .hasArg(true)
+                    .withDescription(
+                            "remove an Item, Collection or Community from index based on its handle")
                             .create("r"));
 
             options.addOption(OptionBuilder.isRequired(false).withDescription(
                     "optimize existing index").create("o"));
 
             options.addOption(OptionBuilder
-                            .isRequired(false)
-                            .withDescription(
-                                    "clean existing index removing any documents that no longer exist in the db")
+                    .isRequired(false)
+                    .withDescription(
+                            "clean existing index removing any documents that no longer exist in the db")
                             .create("c"));
 
             options.addOption(OptionBuilder.isRequired(false).withDescription(
                     "(re)build index, wiping out current one if it exists").create(
-                    "b"));
+                            "b"));
 
             options.addOption(OptionBuilder
-                            .isRequired(false)
-                            .withDescription(
-                                    "if updating existing index, force each handle to be reindexed even if uptodate")
+                    .isRequired(false)
+                    .withDescription(
+                            "if updating existing index, force each handle to be reindexed even if uptodate")
                             .create("f"));
 
             options.addOption(OptionBuilder.isRequired(false).withDescription(
@@ -511,9 +512,9 @@ public class DSIndexer
      * @param context
      */
     public static void updateIndex(Context context) {
-    	updateIndex(context,false);
+        updateIndex(context,false);
     }
-    
+
     /**
      * Iterates over all Items, Collections and Communities. And updates
      * them in the index. Uses decaching to control memory footprint.
@@ -528,46 +529,46 @@ public class DSIndexer
      * @param force 
      */
     public static void updateIndex(Context context, boolean force) {
-    		try
-    		{
-                ItemIterator items = null;
-                try
+        try
+        {
+            ItemIterator items = null;
+            try
+            {
+                for(items = Item.findAll(context);items.hasNext();)
                 {
-                    for(items = Item.findAll(context);items.hasNext();)
-                    {
-                        Item item = (Item) items.next();
-                        indexContent(context, item);
-                        item.decache();
-                    }
+                    Item item = (Item) items.next();
+                    indexContent(context, item);
+                    item.decache();
                 }
-                finally
+            }
+            finally
+            {
+                if (items != null)
                 {
-                    if (items != null)
-                    {
-                        items.close();
-                    }
+                    items.close();
                 }
+            }
 
-                for (Collection collection : Collection.findAll(context))
-                {
-                    indexContent(context, collection);
-    	            context.removeCached(collection, collection.getID());
-                }
+            for (Collection collection : Collection.findAll(context))
+            {
+                indexContent(context, collection);
+                context.removeCached(collection, collection.getID());
+            }
 
-                for (Community community : Community.findAll(context))
-    	        {
-                    indexContent(context, community);
-    	            context.removeCached(community, community.getID());
-    	        }
+            for (Community community : Community.findAll(context))
+            {
+                indexContent(context, community);
+                context.removeCached(community, community.getID());
+            }
 
-    	        optimizeIndex(context);
-    		}
-    		catch(Exception e)
-    		{
-    			log.error(e.getMessage(), e);
-    		}
+            optimizeIndex(context);
+        }
+        catch(Exception e)
+        {
+            log.error(e.getMessage(), e);
+        }
     }
-    
+
     /**
      * Iterates over all documents in the Lucene index and verifies they 
      * are in database, if not, they are removed.
@@ -578,14 +579,14 @@ public class DSIndexer
      */
     public static void cleanIndex(Context context) throws IOException, SQLException {
 
-    	IndexReader reader = DSQuery.getIndexReader();
-    	
-    	for(int i = 0 ; i < reader.numDocs(); i++)
-    	{
-    		if(!reader.isDeleted(i))
-    		{
-    			Document doc = reader.document(i);
-        		String handle = doc.get("handle");
+        IndexReader reader = DSQuery.getIndexReader();
+
+        for(int i = 0 ; i < reader.numDocs(); i++)
+        {
+            if(!reader.isDeleted(i))
+            {
+                Document doc = reader.document(i);
+                String handle = doc.get("handle");
                 if (!StringUtils.isEmpty(handle))
                 {
                     DSpaceObject o = HandleManager.resolveToObject(context, handle);
@@ -602,15 +603,15 @@ public class DSIndexer
                         log.debug("Keeping: " + handle);
                     }
                 }
-    		}
-    		else
-    		{
-    			log.debug("Encountered deleted doc: " + i);
-    		}
-    	}
-	}
-    
-	/**
+            }
+            else
+            {
+                log.debug("Encountered deleted doc: " + i);
+            }
+        }
+    }
+
+    /**
      * Get the Lucene analyzer to use according to current configuration (or
      * default). TODO: Should have multiple analyzers (and maybe indices?) for
      * multi-lingual DSpaces.
@@ -837,82 +838,82 @@ public class DSIndexer
     ////////////////////////////////////
 
     private static void emailException(Exception exception) {
-		// Also email an alert, system admin may need to check for stale lock
-		try {
-			String recipient = ConfigurationManager
-					.getProperty("alert.recipient");
+        // Also email an alert, system admin may need to check for stale lock
+        try {
+            String recipient = ConfigurationManager
+                    .getProperty("alert.recipient");
 
-			if (recipient != null) {
-				Email email = ConfigurationManager.getEmail(I18nUtil.getEmailFilename(Locale.getDefault(), "internal_error"));
-				email.addRecipient(recipient);
-				email.addArgument(ConfigurationManager
-						.getProperty("dspace.url"));
-				email.addArgument(new Date());
+            if (recipient != null) {
+                Email email = ConfigurationManager.getEmail(I18nUtil.getEmailFilename(Locale.getDefault(), "internal_error"));
+                email.addRecipient(recipient);
+                email.addArgument(ConfigurationManager
+                        .getProperty("dspace.url"));
+                email.addArgument(new Date());
 
-				String stackTrace;
+                String stackTrace;
 
-				if (exception != null) {
-					StringWriter sw = new StringWriter();
-					PrintWriter pw = new PrintWriter(sw);
-					exception.printStackTrace(pw);
-					pw.flush();
-					stackTrace = sw.toString();
-				} else {
-					stackTrace = "No exception";
-				}
+                if (exception != null) {
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    exception.printStackTrace(pw);
+                    pw.flush();
+                    stackTrace = sw.toString();
+                } else {
+                    stackTrace = "No exception";
+                }
 
-				email.addArgument(stackTrace);
-				email.send();
-			}
-		} catch (Exception e) {
-			// Not much we can do here!
-			log.warn("Unable to send email alert", e);
-		}
+                email.addArgument(stackTrace);
+                email.send();
+            }
+        } catch (Exception e) {
+            // Not much we can do here!
+            log.warn("Unable to send email alert", e);
+        }
 
-	}
-    
+    }
+
     /**
-	 * Is stale checks the lastModified time stamp in the database and the index
-	 * to determine if the index is stale.
-	 * 
-	 * @param lastModified
-	 * @throws SQLException
-	 * @throws IOException
-	 */
+     * Is stale checks the lastModified time stamp in the database and the index
+     * to determine if the index is stale.
+     * 
+     * @param lastModified
+     * @throws SQLException
+     * @throws IOException
+     */
     private static boolean requiresIndexing(Term t, Date lastModified)
-    throws SQLException, IOException
-    {
-		
-		boolean reindexItem = false;
-		boolean inIndex = false;
-		
-		IndexReader ir = DSQuery.getIndexReader();
-		
-		TermDocs docs = ir.termDocs(t);
-						
-		while(docs.next())
-		{
-			inIndex = true;
-			int id = docs.doc();
-			Document doc = ir.document(id);
+            throws SQLException, IOException
+            {
 
-			Field lastIndexed = doc.getField(LAST_INDEXED_FIELD);
+        boolean reindexItem = false;
+        boolean inIndex = false;
 
-			if (lastIndexed == null || Long.parseLong(lastIndexed.stringValue()) < 
-					lastModified.getTime()) {
-				reindexItem = true;
-			}
-		}
+        IndexReader ir = DSQuery.getIndexReader();
 
-		return reindexItem || !inIndex;
-	}
+        TermDocs docs = ir.termDocs(t);
+
+        while(docs.next())
+        {
+            inIndex = true;
+            int id = docs.doc();
+            Document doc = ir.document(id);
+
+            Field lastIndexed = doc.getField(LAST_INDEXED_FIELD);
+
+            if (lastIndexed == null || Long.parseLong(lastIndexed.stringValue()) < 
+                    lastModified.getTime()) {
+                reindexItem = true;
+            }
+        }
+
+        return reindexItem || !inIndex;
+            }
 
     /**
      * prepare index, opening writer, and wiping out existing index if necessary
      */
     private static IndexWriter openIndex(boolean wipeExisting)
             throws IOException
-    {
+            {
         Directory dir = FSDirectory.open(new File(indexDirectory));
         IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_33, getAnalyzer());
         if(wipeExisting){
@@ -932,9 +933,9 @@ public class DSIndexer
         {
             writer.setMaxFieldLength(maxfieldlength);
         }
-        
+
         return writer;
-    }
+            }
 
     /**
      * @param myitem
@@ -1000,8 +1001,8 @@ public class DSIndexer
 
         if (name != null)
         {
-        	doc.add(new Field("name", name, Field.Store.NO, Field.Index.ANALYZED));
-        	doc.add(new Field("default", name, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(new Field("name", name, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(new Field("default", name, Field.Store.NO, Field.Index.ANALYZED));
         }
 
         return doc;
@@ -1026,8 +1027,8 @@ public class DSIndexer
 
         if (name != null)
         {
-        	doc.add(new Field("name", name, Field.Store.NO, Field.Index.ANALYZED));
-        	doc.add(new Field("default", name, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(new Field("name", name, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(new Field("default", name, Field.Store.NO, Field.Index.ANALYZED));
         }
 
         return doc;
@@ -1042,9 +1043,9 @@ public class DSIndexer
      */
     private static Document buildDocumentForItem(Item item) throws SQLException, IOException, DCInputsReaderException
     {
-    	String handle = item.getHandle();
+        String handle = item.getHandle();
 
-    	// get the location string (for searching by collection & community)
+        // get the location string (for searching by collection & community)
         String location = buildItemLocationString(item);
 
         Document doc = buildDocument(Constants.ITEM, item.getID(), handle, location);
@@ -1068,9 +1069,10 @@ public class DSIndexer
                     mydc = item.getMetadata(indexConfigArr[i].schema, indexConfigArr[i].element, indexConfigArr[i].qualifier, Item.ANY);
                 }
 
-               
+
                 //Index the controlled vocabularies localized display values for all localized input-forms.xml (e.g. input-forms_el.xml)
                 if ("inputform".equalsIgnoreCase(indexConfigArr[i].type)){
+
 
                     List<String> newValues = new ArrayList<String>();
                     Locale[] supportedLocales=I18nUtil.getSupportedLocales();
@@ -1109,8 +1111,8 @@ public class DSIndexer
 
                 }
 
-           
-             for (j = 0; j < mydc.length; j++)
+
+                for (j = 0; j < mydc.length; j++)
                 {
                     if (!StringUtils.isEmpty(mydc[j].value))
                     {
@@ -1120,14 +1122,14 @@ public class DSIndexer
                             if (d != null)
                             {
                                 doc.add( new Field(indexConfigArr[i].indexName,
-                                                   DateTools.dateToString(d, DateTools.Resolution.SECOND),
-                                                   Field.Store.NO,
-                                                   Field.Index.NOT_ANALYZED));
+                                        DateTools.dateToString(d, DateTools.Resolution.SECOND),
+                                        Field.Store.NO,
+                                        Field.Index.NOT_ANALYZED));
 
                                 doc.add( new Field(indexConfigArr[i].indexName  + ".year",
-                                                    DateTools.dateToString(d, DateTools.Resolution.YEAR),
-                                                    Field.Store.NO,
-                                                    Field.Index.NOT_ANALYZED));
+                                        DateTools.dateToString(d, DateTools.Resolution.YEAR),
+                                        Field.Store.NO,
+                                        Field.Index.NOT_ANALYZED));
                             }
                         }
                         else if ("date".equalsIgnoreCase(indexConfigArr[i].type))
@@ -1136,14 +1138,14 @@ public class DSIndexer
                             if (d != null)
                             {
                                 doc.add( new Field(indexConfigArr[i].indexName,
-                                                   DateTools.dateToString(d, DateTools.Resolution.DAY),
-                                                   Field.Store.NO,
-                                                   Field.Index.NOT_ANALYZED));
+                                        DateTools.dateToString(d, DateTools.Resolution.DAY),
+                                        Field.Store.NO,
+                                        Field.Index.NOT_ANALYZED));
 
                                 doc.add( new Field(indexConfigArr[i].indexName  + ".year",
-                                                    DateTools.dateToString(d, DateTools.Resolution.YEAR),
-                                                    Field.Store.NO,
-                                                    Field.Index.NOT_ANALYZED));
+                                        DateTools.dateToString(d, DateTools.Resolution.YEAR),
+                                        Field.Store.NO,
+                                        Field.Index.NOT_ANALYZED));
                             }
                         }
                         else
@@ -1153,13 +1155,13 @@ public class DSIndexer
                                     .getMinConfidence(mydc[j].schema, mydc[j].element, mydc[j].qualifier))
                             {
                                 variants = ChoiceAuthorityManager.getManager()
-                                            .getVariants(mydc[j].schema, mydc[j].element, mydc[j].qualifier,
+                                        .getVariants(mydc[j].schema, mydc[j].element, mydc[j].qualifier,
                                                 mydc[j].authority, mydc[j].language);
 
                                 doc.add( new Field(indexConfigArr[i].indexName+"_authority",
-                                   mydc[j].authority,
-                                   Field.Store.NO,
-                                   Field.Index.NOT_ANALYZED));
+                                        mydc[j].authority,
+                                        Field.Store.NO,
+                                        Field.Index.NOT_ANALYZED));
 
                                 boolean valueAlreadyIndexed = false;
                                 if (variants != null)
@@ -1168,9 +1170,9 @@ public class DSIndexer
                                     {
                                         // TODO: use a delegate to allow custom 'types' to be used to reformat the field
                                         doc.add( new Field(indexConfigArr[i].indexName,
-                                                           var,
-                                                           Field.Store.NO,
-                                                           Field.Index.ANALYZED));
+                                                var,
+                                                Field.Store.NO,
+                                                Field.Index.ANALYZED));
                                         if (var.equals(mydc[j].value))
                                         {
                                             valueAlreadyIndexed = true;
@@ -1178,10 +1180,10 @@ public class DSIndexer
                                         else
                                         {   // add to default index too...
                                             // (only variants, main value is already take)
-                                             doc.add( new Field("default",
-                                                       var,
-                                                       Field.Store.NO,
-                                                       Field.Index.ANALYZED));
+                                            doc.add( new Field("default",
+                                                    var,
+                                                    Field.Store.NO,
+                                                    Field.Index.ANALYZED));
                                         }
                                     }
                                 }
@@ -1190,19 +1192,19 @@ public class DSIndexer
                                 {
                                     // TODO: use a delegate to allow custom 'types' to be used to reformat the field
                                     doc.add( new Field(indexConfigArr[i].indexName,
-                                                       mydc[j].value,
-                                                       Field.Store.NO,
-                                                       Field.Index.ANALYZED));
+                                            mydc[j].value,
+                                            Field.Store.NO,
+                                            Field.Index.ANALYZED));
                                 }
                             }
                             else
                             {
-	                            // TODO: use a delegate to allow custom 'types' to be used to reformat the field
-	                            doc.add( new Field(indexConfigArr[i].indexName,
-	                                               mydc[j].value,
-	                                               Field.Store.NO,
-	                                               Field.Index.ANALYZED));
-                        	}
+                                // TODO: use a delegate to allow custom 'types' to be used to reformat the field
+                                doc.add( new Field(indexConfigArr[i].indexName,
+                                        mydc[j].value,
+                                        Field.Store.NO,
+                                        Field.Index.ANALYZED));
+                            }
                         }
 
                         doc.add( new Field("default", mydc[j].value, Field.Store.NO, Field.Index.ANALYZED));
@@ -1237,7 +1239,7 @@ public class DSIndexer
 
         try
         {
-        	// now get full text of any bitstreams in the TEXT bundle
+            // now get full text of any bitstreams in the TEXT bundle
             // trundle through the bundles
             Bundle[] myBundles = item.getBundles();
 
@@ -1261,7 +1263,7 @@ public class DSIndexer
                         catch (Exception e)
                         {
                             // this will never happen, but compiler is now happy.
-                        	log.error(e.getMessage(),e);
+                            log.error(e.getMessage(),e);
                         }
                     }
                 }
@@ -1269,7 +1271,7 @@ public class DSIndexer
         }
         catch(Exception e)
         {
-        	log.error(e.getMessage(),e);
+            log.error(e.getMessage(),e);
         }
 
         log.info("Wrote Item: " + handle + " to Index");
@@ -1319,7 +1321,7 @@ public class DSIndexer
         if(location != null)
         {
             doc.add(new Field("location", location, Field.Store.NO, Field.Index.ANALYZED));
-    	    doc.add(new Field("default", location, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(new Field("default", location, Field.Store.NO, Field.Index.ANALYZED));
         }
 
         return doc;
@@ -1399,30 +1401,30 @@ public class DSIndexer
         // Choose the likely date formats based on string length
         switch (t.length())
         {
-            case 4:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy") };
-                break;
-            case 6:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyyMM") };
-                break;
-            case 7:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM") };
-                break;
-            case 8:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyyMMdd"), new SimpleDateFormat("yyyy MMM") };
-                break;
-            case 10:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM-dd") };
-                break;
-            case 11:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy MMM dd") };
-                break;
-            case 20:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'") };
-                break;
-            default:
-                dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") };
-                break;
+        case 4:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy") };
+            break;
+        case 6:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyyMM") };
+            break;
+        case 7:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM") };
+            break;
+        case 8:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyyMMdd"), new SimpleDateFormat("yyyy MMM") };
+            break;
+        case 10:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM-dd") };
+            break;
+        case 11:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy MMM dd") };
+            break;
+        case 20:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'") };
+            break;
+        default:
+            dfArr = new SimpleDateFormat[] { new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") };
+            break;
         }
 
 
@@ -1440,7 +1442,7 @@ public class DSIndexer
                 log.error("Unable to parse date format", pe);
             }
         }
-        
+
         return null;
     }
 
