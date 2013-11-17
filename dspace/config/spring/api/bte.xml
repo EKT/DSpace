@@ -59,74 +59,53 @@
 		class="gr.ekt.transformationengine.core.ConjunctionTransformationWorkflow">
 		<property name="steps">
 			<list>
+				<ref bean="filepathSeparator" />
 			</list>
 		</property>
 	</bean>
 
+	<bean id="filepathSeparator" class="org.dspace.app.itemimport.FilePathSeparator">
+	</bean>
+	
 	<bean id="dcMap" class="java.util.HashMap">
 		<constructor-arg>
 			<map>
 				<entry>
 					<key>
-						<value>Title</value>
+						<value>Títol</value>
 					</key>
 					<ref bean="titleDSpaceMetadata" />
 				</entry>
 				<entry>
 					<key>
-						<value>Type</value>
+						<value>Tipus</value>
 					</key>
 					<ref bean="typeDSpaceMetadata" />
 				</entry>
 				<entry>
 					<key>
-						<value>Author</value>
+						<value>Enllaç amb autors</value>
 					</key>
 					<ref bean="authorDSpaceMetadata" />
 				</entry>
 				<entry>
 					<key>
-						<value>Journal</value>
-					</key>
-					<ref bean="sourceDSpaceMetadata" />
-				</entry>
-				<entry>
-					<key>
-						<value>Year</value>
+						<value>Datació</value>
 					</key>
 					<ref bean="dateDSpaceMetadata" />
 				</entry>
 				<entry>
 					<key>
-						<value>ISSN</value>
+						<value>Descripció</value>
 					</key>
-					<ref bean="issnDSpaceMetadata" />
-				</entry>
-			</map>
-		</constructor-arg>
-	</bean>
-
-	<bean id="ektMap" class="java.util.HashMap">
-		<constructor-arg>
-			<map>
-				<entry>
-					<key>
-						<value>Title</value>
-					</key>
-					<ref bean="titleDSpaceMetadata" />
-				</entry>
-				<entry>
-					<key>
-						<value>Type</value>
-					</key>
-					<ref bean="typeDSpaceMetadata" />
+					<ref bean="abstractDSpaceMetadata" />
 				</entry>
 			</map>
 		</constructor-arg>
 	</bean>
 
 	<bean id="outputGenerator"
-		class="gr.ekt.transformationengine.outputGenerators.DSpaceOutputGenerator">
+		class="org.dspace.app.itemimport.DSpaceFileOutputGenerator">
 		<property name="mappings">
 			<map>
 				<entry>
@@ -134,12 +113,6 @@
 						<value>dc</value>
 					</key>
 					<ref bean="dcMap" />
-				</entry>
-				<entry>
-					<key>
-						<value>ekt</value>
-					</key>
-					<ref bean="ektMap" />
 				</entry>
 			</map>
 		</property>
@@ -162,16 +135,8 @@
 		<property name="element" value="description" />
 		<property name="qualifier" value="abstract" />
 	</bean>
-	<bean id="sourceDSpaceMetadata" class="gr.ekt.transformationengine.dspace.DSpaceMetadata">
-		<property name="schema" value="dc" />
-		<property name="element" value="source" />
-	</bean>
 	<bean id="dateDSpaceMetadata" class="gr.ekt.transformationengine.dspace.DSpaceMetadata">
 		<property name="schema" value="dc" />
 		<property name="element" value="date" />
-	</bean>
-	<bean id="issnDSpaceMetadata" class="gr.ekt.transformationengine.dspace.DSpaceMetadata">
-		<property name="schema" value="dc" />
-		<property name="element" value="identifier" />
 	</bean>
 </beans> 
